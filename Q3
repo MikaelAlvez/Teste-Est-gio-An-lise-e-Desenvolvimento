@@ -1,0 +1,84 @@
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+public class FaturamentoAnalyzer {
+
+    static class FaturamentoDiario {
+        int dia;
+        double valor;
+
+        FaturamentoDiario(int dia, double valor) {
+            this.dia = dia;
+            this.valor = valor;
+        }
+    }
+
+    public static double menorFaturamento(List<FaturamentoDiario> faturamentos) {
+        return faturamentos.stream()
+                .mapToDouble(f -> f.valor)
+                .filter(valor -> valor > 0) 
+                .min()
+                .orElse(0.0);
+    }
+
+    public static double maiorFaturamento(List<FaturamentoDiario> faturamentos) {
+        return faturamentos.stream()
+                .mapToDouble(f -> f.valor)
+                .filter(valor -> valor > 0) 
+                .max()
+                .orElse(0.0);
+    }
+
+    public static double mediaFaturamento(List<FaturamentoDiario> faturamentos) {
+        return faturamentos.stream()
+                .mapToDouble(f -> f.valor)
+                .filter(valor -> valor > 0) 
+                .average()
+                .orElse(0.0);
+    }
+
+    public static long diasAcimaDaMedia(List<FaturamentoDiario> faturamentos, double media) {
+        return faturamentos.stream()
+                .mapToDouble(f -> f.valor)
+                .filter(valor -> valor > media)
+                .count();
+    }
+
+    public static void main(String[] args) {
+        List<FaturamentoDiario> faturamentos = new ArrayList<>();
+
+        try (FileReader reader = new FileReader("faturamento.json")) {
+            Scanner scanner = new Scanner(reader);
+            StringBuilder jsonString = new StringBuilder();
+            while (scanner.hasNextLine()) {
+                jsonString.append(scanner.nextLine());
+            }
+
+            JSONObject jsonObject = new JSONObject(jsonString.toString());
+            JSONArray jsonArray = jsonObject.getJSONArray("faturamento");
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject obj = jsonArray.getJSONObject(i);
+                faturamentos.add(new FaturamentoDiario(obj.getInt("dia"), obj.getDouble("valor")));
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao ler o arquivo JSON: " + e.getMessage());
+            return;
+        }
+
+        double menor = menorFaturamento(faturamentos);
+        double maior = maiorFaturamento(faturamentos);
+        double media = mediaFaturamento(faturamentos);
+        long diasAcimaDaMedia = diasAcimaDaMedia(faturamentos, media);
+
+        System.out.printf("Menor valor de faturamento: %.2f%n", menor);
+        System.out.printf("Maior valor de faturamento: %.2f%n", maior);
+        System.out.printf("Número de dias com faturamento acima da média: %d%n", diasAcimaDaMedia);
+    }
+}
